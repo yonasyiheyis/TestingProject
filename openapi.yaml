@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: ContextPack API
+  version: 1.0.0
+  description: Stateless context window optimization for LLM agents.
+paths:
+  /v1/pack:
+    post:
+      summary: Pack vector database results into a strict token budget.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - budget_tokens
+                - candidates
+              properties:
+                budget_tokens:
+                  type: integer
+                  description: Maximum token footprint for the LLM context window.
+                model_tokenizer:
+                  type: string
+                  default: "gpt-4o"
+                  description: The tokenizer to use for calculating exact costs.
+                weights:
+                  type: object
+                  properties:
+                    alpha_semantic:
+                      type: number
+                      default: 0.7
+                      description: Weight given to vector search relevance.
+                    beta_confidence:
+                      type: number
+                      default: 0.3
+                      description: Weight given to agent confidence/recency.
+                candidates:
+                  type: array
+                  description: The over-fetched results from your vector database.
+                  items:
+                    type: object
+                    required: [id, text, semantic_score]
+                    properties:
+                      id:
+                        type: string
+                      text:
+                        type: string
+                      semantic_score:
+                        type: number
+                      confidence_score:
+                        type: number
+                        default: 1.0
+      responses:
+        '200':
+          description: Successfully packed context.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_tokens:
+                    type: integer
+                  items_packed:
+                    type: integer
+                  items_dropped:
+                    type: integer
+                  packed_candidates:
+                    type: array
+                    items:
+                      type: object # Returns the retained candidates
